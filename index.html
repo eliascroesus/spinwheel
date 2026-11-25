@@ -4,97 +4,108 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Laisse le destin décider</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0d0d12; --red:#d61f3a; --red2:#b0142c; --green:#3ed45a; --text:#f4f4f4; }
+  :root {
+    --bg:#f1fafd; --card:#ffffff; --ink:#0f1b2d; --muted:#5b6778; --line:#dcecf3;
+    --cyan:#14bdf0; --cyan-d:#0aa3d4; --cyan-soft:#e3f6fd; --cyan-line:#a9e3f7;
+    --green:#22c55e; --green-soft:#dcfce7;
+  }
   * { box-sizing:border-box; margin:0; padding:0; }
-  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Anton','Bebas Neue',Impact,sans-serif; overflow:hidden; }
+  html,body { height:100%; background:var(--bg); color:var(--ink); font-family:'Inter',system-ui,sans-serif; overflow:hidden; }
   .hidden { display:none !important; }
 
+  .btn { background:var(--cyan); color:#fff; border:none; border-radius:12px; padding:12px 20px; font:600 16px 'Inter',sans-serif; cursor:pointer; box-shadow:0 2px 0 var(--cyan-d), 0 6px 16px rgba(20,189,240,.25); transition:transform .08s, filter .15s; }
+  .btn:hover { filter:brightness(1.05); }
+  .btn:active { transform:translateY(1px); }
+  .btn.soft { background:var(--cyan-soft); color:var(--cyan-d); border:1px solid var(--cyan-line); box-shadow:none; }
+
   /* ---------- SETUP ---------- */
-  #setup { height:100%; overflow:auto; display:flex; justify-content:center; padding:40px 16px; }
-  .card { width:100%; max-width:560px; }
-  .card h1 { font-size:44px; letter-spacing:1px; margin-bottom:24px; text-align:center; }
-  .card h1 span { color:var(--red); }
-  label { display:block; font-family:system-ui,sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:1px; color:#aaa; margin:18px 0 6px; }
-  input[type=text], select { width:100%; padding:12px 14px; background:#1a1a22; border:1px solid #333; color:#fff; border-radius:8px; font:16px system-ui,sans-serif; }
+  #setup { height:100%; overflow:auto; display:flex; justify-content:center; padding:48px 16px; }
+  .wrap { width:100%; max-width:620px; }
+  .wrap h1 { font-size:clamp(28px,5vw,40px); font-weight:800; letter-spacing:-1.2px; margin-bottom:8px; }
+  .wrap h1 span { color:var(--cyan); }
+  .sub { color:var(--muted); font-size:16px; margin-bottom:24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:24px; box-shadow:0 4px 24px rgba(15,27,45,.05); }
+  label { display:block; font-size:14px; font-weight:700; margin:20px 0 8px; }
+  label:first-child { margin-top:0; }
+  input[type=text], select { width:100%; padding:12px 14px; background:#fff; border:1px solid var(--line); color:var(--ink); border-radius:12px; font:16px 'Inter',sans-serif; outline:none; }
+  input[type=text]:focus, select:focus { border-color:var(--cyan); box-shadow:0 0 0 3px var(--cyan-soft); }
   .row { display:flex; gap:8px; }
   .row input { flex:1; }
-  .btn { background:var(--red); color:#fff; border:none; border-radius:8px; padding:12px 18px; font:20px 'Bebas Neue',sans-serif; letter-spacing:1px; cursor:pointer; }
-  .btn:hover { filter:brightness(1.1); }
-  .btn.ghost { background:#2a2a33; }
-  ul#items { list-style:none; margin-top:10px; }
-  ul#items li { display:flex; align-items:center; gap:10px; background:#1a1a22; border:1px solid #2a2a33; border-radius:8px; padding:8px 12px; margin-bottom:6px; font:16px system-ui,sans-serif; }
+  .hint { font-size:13px; color:var(--muted); margin-top:6px; }
+  ul#items { list-style:none; margin-top:12px; }
+  ul#items li { display:flex; align-items:center; gap:10px; background:var(--cyan-soft); border:1px solid var(--cyan-line); border-radius:12px; padding:10px 14px; margin-bottom:8px; font-size:15px; font-weight:500; }
   ul#items li span { flex:1; }
-  ul#items li button { background:none; border:none; color:#888; font-size:18px; cursor:pointer; }
-  ul#items li button:hover { color:var(--red); }
-  .play { width:100%; margin-top:28px; font-size:30px; padding:16px; }
-  .hint { font:13px system-ui,sans-serif; color:#777; margin-top:6px; }
+  ul#items li button { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; }
+  ul#items li button:hover { color:#e11d48; }
+  .play { width:100%; margin-top:24px; font-size:18px; padding:16px; }
 
   /* ---------- GAME ---------- */
   #game { height:100%; display:flex; flex-direction:column; align-items:center; padding:3vh 3vw; }
-  #title { font-family:'Anton',sans-serif; font-size:clamp(28px,5vw,64px); letter-spacing:1px; text-transform:uppercase; outline:none; text-align:center; margin-bottom:2vh; cursor:text; }
-  #title .accent { color:var(--red); }
-  #reel { position:relative; width:100%; max-width:1400px; flex:1; background:var(--red); overflow:hidden; border-radius:4px; box-shadow:0 0 60px rgba(214,31,58,.35); }
+  #title { font-weight:800; font-size:clamp(26px,4.5vw,56px); letter-spacing:-1.5px; outline:none; text-align:center; margin-bottom:2.5vh; cursor:text; }
+  #title .accent { color:var(--cyan); }
+  #frame { width:100%; max-width:1400px; flex:1; background:var(--card); border:1px solid var(--line); border-radius:24px; padding:12px; box-shadow:0 8px 32px rgba(15,27,45,.06); display:flex; }
+  #reel { position:relative; flex:1; background:var(--cyan-soft); border:1px solid var(--cyan-line); overflow:hidden; border-radius:16px; }
   #strip { position:absolute; z-index:2; left:0; right:0; top:0; will-change:transform; }
-  .cell { display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:2px; white-space:nowrap; transition:color .2s; }
-  #band { position:absolute; z-index:1; left:0; right:0; pointer-events:none; border-top:2px solid rgba(255,255,255,.25); border-bottom:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.07); transition:background .25s, box-shadow .25s; }
-  #band.spinning { background:rgba(255,60,80,.45); box-shadow:0 0 40px rgba(255,40,60,.8); }
-  #band.win { background:var(--green); border-color:#a6ffb4; box-shadow:0 0 50px rgba(62,212,90,.8); }
-  .cell.winner { color:#fff; position:relative; z-index:2; }
-  #fadeTop,#fadeBot { position:absolute; z-index:3; left:0; right:0; height:22%; pointer-events:none; }
-  #fadeTop { top:0; background:linear-gradient(var(--red2),transparent); }
-  #fadeBot { bottom:0; background:linear-gradient(transparent,var(--red2)); }
-  #controls { margin-top:2vh; text-align:center; }
-  #spinBtn { font-size:24px; padding:10px 40px; }
+  .cell { display:flex; align-items:center; justify-content:center; font-weight:800; letter-spacing:-1px; color:rgba(15,27,45,.35); text-transform:uppercase; white-space:nowrap; transition:color .2s; }
+  #band { position:absolute; z-index:1; left:10px; right:10px; pointer-events:none; border-radius:14px; background:#fff; border:2px solid var(--cyan-line); transition:background .25s, box-shadow .25s, border-color .25s; }
+  #band.spinning { background:var(--cyan); border-color:var(--cyan); box-shadow:0 6px 30px rgba(20,189,240,.45); }
+  #band.win { background:var(--green); border-color:#86efac; box-shadow:0 6px 34px rgba(34,197,94,.5); }
+  .cell.winner { color:#fff; }
+  #fadeTop,#fadeBot { position:absolute; z-index:3; left:0; right:0; height:24%; pointer-events:none; }
+  #fadeTop { top:0; background:linear-gradient(var(--cyan-soft),rgba(227,246,253,0)); }
+  #fadeBot { bottom:0; background:linear-gradient(rgba(227,246,253,0),var(--cyan-soft)); }
+  #controls { margin-top:2.5vh; text-align:center; }
+  #spinBtn { font-size:18px; padding:14px 48px; }
   #spinBtn:disabled { opacity:.5; cursor:default; }
-  .press { font:12px system-ui,sans-serif; color:#aaa; letter-spacing:1px; text-transform:uppercase; margin-top:10px; }
-  .press kbd { border:1px solid #777; border-radius:4px; padding:2px 6px; color:#fff; margin:0 4px; }
-  #topBtns { position:fixed; top:14px; right:16px; display:flex; gap:6px; }
-  #topBtns button { background:#1a1a22; border:1px solid #333; color:#ccc; border-radius:6px; padding:6px 10px; font:13px system-ui,sans-serif; cursor:pointer; }
-  #topBtns button:hover { border-color:var(--red); color:#fff; }
+  .press { font-size:13px; color:var(--muted); margin-top:12px; }
+  .press kbd { border:1px solid var(--line); background:#fff; border-radius:6px; padding:2px 8px; color:var(--ink); font:600 12px 'Inter',sans-serif; margin:0 4px; }
+  #topBtns { position:fixed; top:16px; right:16px; display:flex; gap:8px; z-index:10; }
+  #topBtns button { background:#fff; border:1px solid var(--line); color:var(--ink); border-radius:12px; padding:8px 14px; font:600 14px 'Inter',sans-serif; cursor:pointer; }
+  #topBtns button:hover { border-color:var(--cyan); }
 </style>
 </head>
 <body>
 
-<!-- SETUP SCREEN -->
 <div id="setup">
-  <div class="card">
-    <h1>LAISSE LE DESTIN <span>DÉCIDER.</span></h1>
+  <div class="wrap">
+    <h1>Laisse le destin <span>décider.</span></h1>
+    <p class="sub">Add your options, choose how it lands, then press play.</p>
+    <div class="card">
+      <label>Title <span style="font-weight:400;color:var(--muted)">(the last word is highlighted)</span></label>
+      <input type="text" id="titleInput" value="Laisse le destin décider.">
 
-    <label>Title (the last word shows in red)</label>
-    <input type="text" id="titleInput" value="Laisse le destin décider.">
+      <label>Options</label>
+      <div class="row">
+        <input type="text" id="newItem" placeholder="Type an option and press Enter">
+        <button class="btn" id="addBtn">Add</button>
+      </div>
+      <div class="hint">Tip: paste a list (one per line) to add them all at once.</div>
+      <ul id="items"></ul>
 
-    <label>Add options</label>
-    <div class="row">
-      <input type="text" id="newItem" placeholder="Type an option and press Enter">
-      <button class="btn" id="addBtn">ADD</button>
+      <label>Where should it land?</label>
+      <select id="rigSelect"></select>
+
+      <button class="btn play" id="playBtn">▶ Play</button>
     </div>
-    <div class="hint">Tip: you can paste a list (one per line) into the box.</div>
-    <ul id="items"></ul>
-
-    <label>Where should it land?</label>
-    <select id="rigSelect"></select>
-
-    <button class="btn play" id="playBtn">▶ PLAY</button>
   </div>
 </div>
 
-<!-- GAME SCREEN -->
 <div id="game" class="hidden">
   <div id="topBtns">
     <button id="soundBtn">🔊</button>
-    <button id="backBtn">⚙ Edit</button>
+    <button id="backBtn">Edit</button>
   </div>
   <h1 id="title" contenteditable="true" spellcheck="false"></h1>
-  <div id="reel">
+  <div id="frame"><div id="reel">
     <div id="strip"></div>
     <div id="fadeTop"></div><div id="fadeBot"></div>
     <div id="band"></div>
-  </div>
+  </div></div>
   <div id="controls">
-    <button class="btn" id="spinBtn">⟳ LANCER</button>
-    <div class="press">Appuyez sur <kbd>ESPACE</kbd> pour lancer</div>
+    <button class="btn" id="spinBtn">⟳ Lancer</button>
+    <div class="press">Appuyez sur <kbd>Espace</kbd> pour lancer</div>
   </div>
 </div>
 
@@ -160,7 +171,7 @@ function buildReel() {
   const n = state.items.length;
   strip.innerHTML = ''; cells = [];
   const longest = Math.max(...state.items.map(s => s.length));
-  const fs = Math.min(rowH * 0.78, reel.clientWidth / (longest * 0.5));
+  const fs = Math.min(rowH * 0.6, reel.clientWidth * 0.9 / (longest * 0.7));
   for (let r = 0; r < REPEAT; r++) state.items.forEach(t => {
     const c = document.createElement('div'); c.className='cell';
     c.style.height = rowH+'px'; c.style.fontSize = fs+'px'; c.textContent = t;
