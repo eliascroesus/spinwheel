@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laisse le destin décider</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0d0d12; --red:#d61f3a; --red2:#b0142c; --green:#3ed45a; --text:#f4f4f4; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; background:var(--bg); color:var(--text); font-family:'Anton','Bebas Neue',Impact,sans-serif; overflow:hidden; }
+  .hidden { display:none !important; }
+
+  /* ---------- SETUP ---------- */
+  #setup { height:100%; overflow:auto; display:flex; justify-content:center; padding:40px 16px; }
+  .card { width:100%; max-width:560px; }
+  .card h1 { font-size:44px; letter-spacing:1px; margin-bottom:24px; text-align:center; }
+  .card h1 span { color:var(--red); }
+  label { display:block; font-family:system-ui,sans-serif; font-size:13px; text-transform:uppercase; letter-spacing:1px; color:#aaa; margin:18px 0 6px; }
+  input[type=text], select { width:100%; padding:12px 14px; background:#1a1a22; border:1px solid #333; color:#fff; border-radius:8px; font:16px system-ui,sans-serif; }
+  .row { display:flex; gap:8px; }
+  .row input { flex:1; }
+  .btn { background:var(--red); color:#fff; border:none; border-radius:8px; padding:12px 18px; font:20px 'Bebas Neue',sans-serif; letter-spacing:1px; cursor:pointer; }
+  .btn:hover { filter:brightness(1.1); }
+  .btn.ghost { background:#2a2a33; }
+  ul#items { list-style:none; margin-top:10px; }
+  ul#items li { display:flex; align-items:center; gap:10px; background:#1a1a22; border:1px solid #2a2a33; border-radius:8px; padding:8px 12px; margin-bottom:6px; font:16px system-ui,sans-serif; }
+  ul#items li span { flex:1; }
+  ul#items li button { background:none; border:none; color:#888; font-size:18px; cursor:pointer; }
+  ul#items li button:hover { color:var(--red); }
+  .play { width:100%; margin-top:28px; font-size:30px; padding:16px; }
+  .hint { font:13px system-ui,sans-serif; color:#777; margin-top:6px; }
+
+  /* ---------- GAME ---------- */
+  #game { height:100%; display:flex; flex-direction:column; align-items:center; padding:3vh 3vw; }
+  #title { font-family:'Anton',sans-serif; font-size:clamp(28px,5vw,64px); letter-spacing:1px; text-transform:uppercase; outline:none; text-align:center; margin-bottom:2vh; cursor:text; }
+  #title .accent { color:var(--red); }
+  #reel { position:relative; width:100%; max-width:1400px; flex:1; background:var(--red); overflow:hidden; border-radius:4px; box-shadow:0 0 60px rgba(214,31,58,.35); }
+  #strip { position:absolute; z-index:2; left:0; right:0; top:0; will-change:transform; }
+  .cell { display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; color:rgba(255,255,255,.55); text-transform:uppercase; letter-spacing:2px; white-space:nowrap; transition:color .2s; }
+  #band { position:absolute; z-index:1; left:0; right:0; pointer-events:none; border-top:2px solid rgba(255,255,255,.25); border-bottom:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.07); transition:background .25s, box-shadow .25s; }
+  #band.spinning { background:rgba(255,60,80,.45); box-shadow:0 0 40px rgba(255,40,60,.8); }
+  #band.win { background:var(--green); border-color:#a6ffb4; box-shadow:0 0 50px rgba(62,212,90,.8); }
+  .cell.winner { color:#fff; position:relative; z-index:2; }
+  #fadeTop,#fadeBot { position:absolute; z-index:3; left:0; right:0; height:22%; pointer-events:none; }
+  #fadeTop { top:0; background:linear-gradient(var(--red2),transparent); }
+  #fadeBot { bottom:0; background:linear-gradient(transparent,var(--red2)); }
+  #controls { margin-top:2vh; text-align:center; }
+  #spinBtn { font-size:24px; padding:10px 40px; }
+  #spinBtn:disabled { opacity:.5; cursor:default; }
+  .press { font:12px system-ui,sans-serif; color:#aaa; letter-spacing:1px; text-transform:uppercase; margin-top:10px; }
+  .press kbd { border:1px solid #777; border-radius:4px; padding:2px 6px; color:#fff; margin:0 4px; }
+  #topBtns { position:fixed; top:14px; right:16px; display:flex; gap:6px; }
+  #topBtns button { background:#1a1a22; border:1px solid #333; color:#ccc; border-radius:6px; padding:6px 10px; font:13px system-ui,sans-serif; cursor:pointer; }
+  #topBtns button:hover { border-color:var(--red); color:#fff; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup">
+  <div class="card">
+    <h1>LAISSE LE DESTIN <span>DÉCIDER.</span></h1>
+
+    <label>Title (the last word shows in red)</label>
+    <input type="text" id="titleInput" value="Laisse le destin décider.">
+
+    <label>Add options</label>
+    <div class="row">
+      <input type="text" id="newItem" placeholder="Type an option and press Enter">
+      <button class="btn" id="addBtn">ADD</button>
+    </div>
+    <div class="hint">Tip: you can paste a list (one per line) into the box.</div>
+    <ul id="items"></ul>
+
+    <label>Where should it land?</label>
+    <select id="rigSelect"></select>
+
+    <button class="btn play" id="playBtn">▶ PLAY</button>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game" class="hidden">
+  <div id="topBtns">
+    <button id="soundBtn">🔊</button>
+    <button id="backBtn">⚙ Edit</button>
+  </div>
+  <h1 id="title" contenteditable="true" spellcheck="false"></h1>
+  <div id="reel">
+    <div id="strip"></div>
+    <div id="fadeTop"></div><div id="fadeBot"></div>
+    <div id="band"></div>
+  </div>
+  <div id="controls">
+    <button class="btn" id="spinBtn">⟳ LANCER</button>
+    <div class="press">Appuyez sur <kbd>ESPACE</kbd> pour lancer</div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STORE = 'destin-wheel-v1';
+let state = { title:'Laisse le destin décider.', items:['Trading','Dropshipping','YouTube Kids','E-Commerce','Affiliate Marketing'], rig:'random', muted:false };
+try { Object.assign(state, JSON.parse(localStorage.getItem(STORE)) || {}); } catch(e) {}
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e) {} };
+
+/* ---------- SETUP ---------- */
+function renderItems() {
+  const ul = $('items'); ul.innerHTML = '';
+  state.items.forEach((t,i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span></span><button title="Remove">✕</button>`;
+    li.querySelector('span').textContent = t;
+    li.querySelector('button').onclick = () => { state.items.splice(i,1); if (state.rig === t) state.rig='random'; save(); renderItems(); };
+    ul.appendChild(li);
+  });
+  const sel = $('rigSelect'); sel.innerHTML = '<option value="random">🎲 Random (up to fate)</option>';
+  state.items.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = '🎯 Always: ' + t; sel.appendChild(o); });
+  sel.value = state.items.includes(state.rig) ? state.rig : 'random';
+}
+function addItems(text) {
+  text.split(/\n|,(?=\s*\S)/).map(s => s.trim()).filter(Boolean).forEach(s => state.items.push(s));
+  save(); renderItems();
+}
+$('addBtn').onclick = () => { addItems($('newItem').value); $('newItem').value=''; $('newItem').focus(); };
+$('newItem').addEventListener('keydown', e => { if (e.key==='Enter') $('addBtn').click(); });
+$('newItem').addEventListener('paste', e => {
+  const t = e.clipboardData.getData('text');
+  if (t.includes('\n')) { e.preventDefault(); addItems(t); }
+});
+$('rigSelect').onchange = e => { state.rig = e.target.value; save(); };
+$('titleInput').value = state.title;
+$('titleInput').oninput = e => { state.title = e.target.value; save(); };
+$('playBtn').onclick = () => {
+  if (state.items.length < 2) { alert('Add at least 2 options.'); return; }
+  $('setup').classList.add('hidden'); $('game').classList.remove('hidden');
+  renderTitle(); buildReel();
+};
+renderItems();
+
+/* ---------- TITLE ---------- */
+function renderTitle() {
+  const words = state.title.trim().split(/\s+/);
+  const last = words.pop() || '';
+  const t = $('title'); t.textContent = words.join(' ') + (words.length ? ' ' : '');
+  const s = document.createElement('span'); s.className='accent'; s.textContent = last; t.appendChild(s);
+}
+$('title').addEventListener('blur', () => { state.title = $('title').textContent; $('titleInput').value = state.title; save(); renderTitle(); });
+$('title').addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); $('title').blur(); } });
+
+/* ---------- REEL ---------- */
+const VISIBLE = 5;
+let rowH = 0, pos = 0, spinning = false, cells = [];
+const REPEAT = 60;
+
+function buildReel() {
+  const reel = $('reel'), strip = $('strip');
+  rowH = reel.clientHeight / VISIBLE;
+  const n = state.items.length;
+  strip.innerHTML = ''; cells = [];
+  const longest = Math.max(...state.items.map(s => s.length));
+  const fs = Math.min(rowH * 0.78, reel.clientWidth / (longest * 0.5));
+  for (let r = 0; r < REPEAT; r++) state.items.forEach(t => {
+    const c = document.createElement('div'); c.className='cell';
+    c.style.height = rowH+'px'; c.style.fontSize = fs+'px'; c.textContent = t;
+    strip.appendChild(c); cells.push(c);
+  });
+  const band = $('band'); band.style.top = rowH*2+'px'; band.style.height = rowH+'px';
+  band.className = '';
+  pos = ((pos % n) + n) % n + n * 2; // keep index, start near top of strip
+  setStrip(pos, 0);
+}
+function setStrip(p, blur) {
+  // p = index of item sitting in the centre row (row 2)
+  $('strip').style.transform = `translateY(${(2 - p) * rowH}px)`;
+  $('strip').style.filter = blur > 0.5 ? `blur(${Math.min(blur,8)}px)` : 'none';
+}
+window.addEventListener('resize', () => { if (!$('game').classList.contains('hidden') && !spinning) buildReel(); });
+
+function spin() {
+  if (spinning) return;
+  spinning = true; $('spinBtn').disabled = true;
+  audio(); cells.forEach(c => c.classList.remove('winner'));
+  const n = state.items.length;
+  const targetIdx = state.items.includes(state.rig) ? state.items.indexOf(state.rig) : Math.floor(Math.random()*n);
+  const start = n * 2 + (Math.round(pos) % n);
+  const loops = 8 + Math.floor(Math.random()*3);
+  const end = n * 2 + loops * n + targetIdx + (targetIdx < start % n ? 0 : 0);
+  let target = n*2 + targetIdx; while (target < start + loops*n) target += n;
+  const dist = target - start;
+  const dur = 5200 + Math.random()*800;
+  const band = $('band'); band.className = 'spinning';
+  let t0 = null, lastTick = Math.floor(start), prevP = start;
+  const ease = t => 1 - Math.pow(1 - t, 4);
+  function frame(ts) {
+    if (t0 === null) t0 = ts;
+    const t = Math.min((ts - t0)/dur, 1);
+    const p = start + dist * ease(t);
+    const speed = (p - prevP) * rowH; prevP = p;
+    setStrip(p, speed * 0.15);
+    const idx = Math.floor(p + 0.5);
+    if (idx !== lastTick) { lastTick = idx; tick(Math.min(1, speed/40)); }
+    if (t < 1) requestAnimationFrame(frame);
+    else {
+      pos = target; setStrip(pos, 0);
+      cells[target].classList.add('winner');
+      band.className = 'win'; winSound();
+      spinning = false; $('spinBtn').disabled = false;
+      pos = n*2 + targetIdx; // reset to top silently later
+      setTimeout(() => { if (!spinning) { cells.forEach(c=>c.classList.remove('winner')); setStrip(pos,0); cells[pos].classList.add('winner'); } }, 50);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+$('spinBtn').onclick = spin;
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !$('game').classList.contains('hidden') && document.activeElement !== $('title')) { e.preventDefault(); spin(); }
+});
+$('backBtn').onclick = () => { if (spinning) return; $('game').classList.add('hidden'); $('setup').classList.remove('hidden'); renderItems(); };
+
+/* ---------- SOUND ---------- */
+let ctx = null;
+function audio() { if (!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); if (ctx.state==='suspended') ctx.resume(); return ctx; }
+function tone(freq, start, dur, vol, type='sine') {
+  if (state.muted) return;
+  const a = audio(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(vol, start+0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, start+dur);
+  o.connect(g).connect(a.destination); o.start(start); o.stop(start+dur+0.02);
+}
+function tick(fast) {
+  if (state.muted || !ctx) return;
+  const t = ctx.currentTime;
+  tone(1500 + fast*400, t, 0.06, 0.18, 'square');   // "ding" click
+  tone(3000, t, 0.03, 0.05, 'sine');
+}
+function winSound() {
+  if (state.muted || !ctx) return;
+  const t = ctx.currentTime + 0.05;
+  [523.25, 659.25, 783.99, 1046.5].forEach((f,i) => { tone(f, t+i*0.09, 0.5, 0.22, 'triangle'); tone(f*2, t+i*0.09, 0.3, 0.05, 'sine'); });
+  [1046.5,1318.5,1568].forEach(f => tone(f, t+0.4, 1.3, 0.12, 'triangle')); // final chord
+}
+function renderSoundBtn() { $('soundBtn').textContent = state.muted ? '🔇' : '🔊'; }
+$('soundBtn').onclick = () => { state.muted = !state.muted; save(); renderSoundBtn(); };
+renderSoundBtn();
+</script>
+</body>
+</html>
